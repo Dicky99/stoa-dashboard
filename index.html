@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stoa Swaps — Robinhood Chain Dashboard</title>
+<meta name="description" content="Live public dashboard of Stoa router swaps on Robinhood Chain (chain 4663): volume, traders, routes per venue and recent swaps — read straight from the chain.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div>
+      <h1>Stoa Swaps <span class="chain">Robinhood Chain</span></h1>
+      <p class="sub">Live dashboard of swaps routed through the Stoa router on Robinhood Chain (chain&nbsp;4663) — volume, traders, routes per venue, recent swaps. Every number is read from the chain.</p>
+    </div>
+    <div class="top-actions">
+      <span id="liveBadge" class="badge">● connecting…</span>
+      <a id="swapBtn" class="btn-primary" href="https://stoadex.com/trade?referrer=0x4e1460e9b71686c7fC437C43028d286AA625d36E" target="_blank" rel="noopener">Swap on Stoa ↗</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="controls">
+    <div class="windows" role="group" aria-label="Time window">
+      <button data-window="24h">24h</button>
+      <button data-window="7d">7d</button>
+      <button data-window="30d" class="active">30d</button>
+      <button data-window="all">All time</button>
+    </div>
+    <div class="refresh">
+      <button id="refreshBtn">↻ Refresh</button>
+      <span id="updatedAt" class="muted">—</span>
+    </div>
+  </section>
+
+  <section id="errorBox" class="error hidden"></section>
+
+  <section class="cards">
+    <div class="card"><div class="label">Total volume (USD)</div><div class="big" id="statVolume">—</div><div class="note" id="statVolumeNote"></div></div>
+    <div class="card"><div class="label">Swaps</div><div class="big" id="statSwaps">—</div><div class="note" id="statSwapsNote"></div></div>
+    <div class="card"><div class="label">Unique traders</div><div class="big" id="statTraders">—</div><div class="note">distinct <code>sender</code> addresses</div></div>
+    <div class="card"><div class="label">Avg swap size (USD)</div><div class="big" id="statAvg">—</div><div class="note">swaps with a known USD value only</div></div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel">
+      <h2>Routes per venue</h2>
+      <p class="muted small">Share of swaps that used each venue (a two-leg swap can touch two venues). Venue names from Stoa's official contracts page; unknown venues show their address.</p>
+      <div id="venueList" class="venue-list">Loading…</div>
+    </div>
+    <div class="panel">
+      <h2>Top pairs</h2>
+      <p class="muted small">By swap count in the selected window.</p>
+      <table class="tbl" id="pairTable">
+        <thead><tr><th>Pair</th><th>Swaps</th><th>Volume (USD)</th></tr></thead>
+        <tbody><tr><td colspan="3">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Daily volume (USD)</h2>
+    <p class="muted small">Last 14 days with activity, by UTC date. Bars show USD volume where a USD value is known (USDG leg = $1, ETH leg × live CoinGecko price).</p>
+    <div id="dailyChart" class="chart">Loading…</div>
+  </section>
+
+  <section class="panel">
+    <h2>Recent swaps</h2>
+    <p class="muted small">Latest 25 swaps in the selected window. Click a tx hash to open it on Blockscout.</p>
+    <div class="table-scroll">
+      <table class="tbl" id="swapTable">
+        <thead><tr><th>Time (UTC)</th><th>Trader</th><th>Pair</th><th>Amount in → out</th><th>Venue(s)</th><th>Tx</th></tr></thead>
+        <tbody><tr><td colspan="6">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Get a quote — with referrer set</h2>
+    <p class="muted small">Live quote from Stoa's HTTP API (<code>stoadex.com/api/v1/quote</code>). The unsigned swap transaction it returns names <code>0x4e14…36E</code> as <code>referrer</code> — the same address the “Swap on Stoa” button uses. Read-only: no wallet connection, no signing, nothing is sent.</p>
+    <form id="quoteForm" class="quote-form">
+      <label>Sell
+        <select id="sellToken">
+          <option value="native">ETH (native)</option>
+          <option value="0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168">USDG</option>
+          <option value="0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73">WETH</option>
+          <option value="0x13E6993417616De724F2b337D65063f229e96718">STOA</option>
+        </select>
+      </label>
+      <label>Amount <input id="sellAmount" type="number" min="0" step="any" value="0.01" required></label>
+      <label>Buy
+        <select id="buyToken">
+          <option value="0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168">USDG</option>
+          <option value="native">ETH (native)</option>
+          <option value="0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73">WETH</option>
+          <option value="0x13E6993417616De724F2b337D65063f229e96718">STOA</option>
+          <option value="0x2e0847e8910a9732eb3fb1bb4b70a580adad4fe3">GOOGL</option>
+          <option value="0x51250b135174ca09450ec01c4aff73cf69dbb590">NOVAAI</option>
+          <option value="0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea">SPCX</option>
+        </select>
+      </label>
+      <button type="submit" class="btn-primary">Get quote</button>
+    </form>
+    <div id="quoteOut" class="quote-out muted">Enter an amount and press “Get quote”.</div>
+  </section>
+
+  <section class="panel">
+    <h2>Data &amp; methodology</h2>
+    <ul class="small">
+      <li>Source: <code>eth_getLogs</code> on the StoaRouter contract <a href="https://robinhoodchain.blockscout.com/address/0x2F2804fad735a38015650f32f95Ad5E08D6B3eE5" target="_blank" rel="noopener">0x2F28…3eE5</a>, event <code>Routed(address,address,address,address,address,uint256,uint256,address,address,address)</code> (<code>topic0 0x2bbc…f6da</code>), in 1,000,000-block chunks. First <code>Routed</code> event: block 114,378,637 (2026-11-14 19:00:34 UTC). Block time ≈ 0.104&nbsp;s.</li>
+      <li>RPC: <code>https://rpc.mainnet.chain.robinhood.com</code> (fallback <code>https://robinhood.drpc.org</code>). Both send <code>Access-Control-Allow-Origin: *</code>, so the page reads the chain directly from your browser — no server, no key.</li>
+      <li>USD volume: a swap's USD value comes from its USDG leg (USDG = $1) when present, otherwise its ETH leg × the live CoinGecko ETH price. Swaps with neither leg (e.g. STOA ↔ SPCX) have no USD value and are excluded from USD totals — shown in native amounts only.</li>
+      <li>Tokens: symbols/decimals resolved on-chain via <code>symbol()</code>/<code>decimals()</code> (verified 2026-11-21). Two different tokens both call themselves “STOA” (0x13e6… is the official $STOA; 0x1dd5… is a separate token) — the dashboard disambiguates them by address.</li>
+      <li>Venues: names from <a href="https://stoadex.com/docs/contracts" target="_blank" rel="noopener">Stoa's official contracts page</a> (Uniswap V3, Uniswap V4, Uniswap V4 V2, Aero, Ramses, Pons Curve, Uniswap V2, Metric). Unknown venues show a truncated address — never a guessed name.</li>
+      <li>Referrer: every swap the dashboard's quote box prepares names <code>0x4e1460e9b71686c7fC437C43028d286AA625d36E</code> as <code>referrer</code> (verified in the returned swap calldata). The “Swap on Stoa” button opens <code>stoadex.com/trade?referrer=0x4e14…36E</code>.</li>
+      <li>Code: <a href="https://github.com/" target="_blank" rel="noopener">open on GitHub</a> (link set after publishing). Static site, no build step, no tracking, no keys. Full query details in <code>README.md</code>.</li>
+    </ul>
+    <p class="muted small" id="statusLine">Status: —</p>
+  </section>
+</main>
+
+<footer class="wrap muted small">
+  Built for the Stoa build bounty (public dashboard, $50 in USDG). Not affiliated with Stoa or Robinhood. Nothing here is investment advice.
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
